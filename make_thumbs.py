@@ -3,7 +3,7 @@ from PIL import Image
 
 #配置路径
 Project_Path = os.path.dirname(os.path.abspath(__file__))
-Source_Dir = os.path.expanduser("~/Pictures/Screenshots")
+Source_Dir=os.path.expanduser("F:/隐私/电脑备份/EhViewer")
 Thumb_Dir = os.path.join(Project_Path,"thumbnails")
 
 #缩略图大小及支持的格式
