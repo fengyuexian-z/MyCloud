@@ -19,7 +19,7 @@ failed  = 0
 
 for filename in os.listdir(Source_Dir):
     #判断格式
-    ext=filename.split('.')[-1].lower()
+    ext=os.path.splitext(filename)[1].lower().lstrip('.')
     if ext not in Supported_Image:
         continue
 

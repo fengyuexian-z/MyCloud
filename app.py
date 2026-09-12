@@ -20,9 +20,9 @@ def scan_recursive(folder_path, base_folder, folder_name, recursive=True):
     result = {}
     for item in os.listdir(folder_path):
         full_path=os.path.join(folder_path,item)
-        if os.path.isdir(item):
+        if os.path.isdir(full_path):
             if recursive:
-                sub_result=scan_recursive(full_path,base_folder,folder_name)
+                sub_result=scan_recursive(full_path,base_folder,folder_name, recursive)
                 for sub_folder, images in sub_result.items():
                     if sub_folder in result:
                         result[sub_folder].extend(images)
@@ -30,12 +30,12 @@ def scan_recursive(folder_path, base_folder, folder_name, recursive=True):
                         result[sub_folder]=images
   
         else:
-            ext=item.split('.')[-1].lower()
+            ext=os.path.splitext(item)[1].lower().lstrip('.')
             if ext in Supported_Image:
                 rel_path=os.path.relpath(full_path, base_folder)
                 sub_path=os.path.dirname(rel_path)
-                if sub_path =="":
-                    sub_path="根目录"
+                if sub_path=="":
+                    sub_path="未分类"
 
                 rel_url=rel_path.replace("\\","/")
                 thumb_url    = f"/file/{folder_name}/{rel_url}"
@@ -66,7 +66,7 @@ def home():
         if os.path.isdir(item_path):
             folders.append(item)
         else:
-            if os.path.splitext(item)[1].lower() in Supported_Image:
+            if os.path.splitext(item)[1].lower().lstrip('.') in Supported_Image:
                 root_images.append(item)
 
     if root_images:
@@ -84,7 +84,7 @@ def home():
         except:
             files = []
 
-        images=[i for i in files if os.path.isfile(i) and os.path.splitext(i)[1].lower() in Supported_Image]
+        images=[i for i in files if os.path.splitext(i)[1].lower().lstrip('.') in Supported_Image]
         cover_img=images[0] if images else None
 
         albums.append({
@@ -98,8 +98,30 @@ def home():
 
 @app.route('/album/<folder>')
 def show_album(folder):
+    if folder == "未分类":
+        folder_path=Source_Dir
+        base_path=Source_Dir
+        folder_name=""
+        if not os.path.exists(folder_path):
+                return "<h1>相册不存在</h1><a href='/'>返回</a>"
+        
+        group = scan_recursive(folder_path, base_path, folder_name, False)
+    else:
+        folder_path = os.path.join(Source_Dir, folder)
+        base_folder = folder_path
+        folder_name = folder
+        if not os.path.exists(folder_path):
+                return "<h1>相册不存在</h1><a href='/'>返回</a>"
+        
+        group = scan_recursive(folder_path, base_folder, folder_name)
 
+    all_orgin=[]
+    for sub_folder, images in group.items():
+        for img in images:
+            all_orgin.append(img["original"])
 
+    return render_template("album.html",all_orgin=all_orgin,group=group)
+     
 @app.route('/file/<path:filename>')
 def send_files(filename):
     thumb_path = os.path.join(Thumb_Dir,filename)
@@ -110,7 +132,9 @@ def send_files(filename):
 
 @app.route('/original/<path:filename>')
 def send_original(filename):
-    return send_from_directory(BASE_DIR, filename)
+    if filename.split("/",1)[0]=="未分类":
+            filename=os.path.basename(filename)
+    return send_from_directory(Source_Dir, filename)
 
 if __name__=='__main__':
     app.run(host='127.0.0.1',port=5000,debug=True)
