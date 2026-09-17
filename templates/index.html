@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的相册</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>我的相册</h1>
+
+    <div class="album-list">
+        {% for album in albums %}
+        <a class="album-card" href="/album/{{ album.name }}">
+            {% if album.cover %}
+                <img src="{{ album.cover }}" alt="{{ album.name }}">
+            {% else %}
+                <div class="no-cover">📁</div>
+            {% endif %}
+            <p>{{ album.name }}</p>
+            <p class="count">{{ album.count }} 张</p>
+        </a>
+        {% endfor %}
+    </div>
+
+</body>
+</html>
