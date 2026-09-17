@@ -6,7 +6,7 @@ app=Flask(__name__)
 
 Project_Path = os.path.dirname(os.path.abspath(__file__))
 Thumb_Dir = os.path.join(Project_Path,"thumbnails")
-Source_Dir=os.path.expanduser("F:/隐私/电脑备份/EhViewer")
+Source_Dir=os.path.expanduser("C:/Users/Lenovo_PC/Downloads")
 if not os.path.exists(Source_Dir):
     Source_Dir = "."
 
@@ -124,6 +124,8 @@ def show_album(folder):
      
 @app.route('/file/<path:filename>')
 def send_files(filename):
+    if filename.split("/",1)[0]=="未分类":
+        filename=os.path.basename(filename)
     thumb_path = os.path.join(Thumb_Dir,filename)
     if(os.path.exists(thumb_path)):
         return send_from_directory(Thumb_Dir, filename)
