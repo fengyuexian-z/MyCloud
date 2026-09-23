@@ -90,3 +90,66 @@ h1 {
     font-size: 24px;
     color: #888;
 }
+
+.header {
+    padding: 12px 15px;
+    background: white;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+.header a {
+    text-decoration: none;
+    color: #007aff;
+    font-weight: bold;
+}
+
+.header span {
+    float: right;
+    color: #333;
+}
+
+.viewer {
+    position: fixed;       /* 固定屏幕 */
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    display: none;         /* 默认隐藏 */
+    z-index: 9999;
+}
+.viewer.active {
+    display: block;        /* 加active就显示 */
+}
+.swiper {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    width: 100%; height: 100%;
+}
+.swiper::-webkit-scrollbar {
+    display: none;         /* 隐藏滚动条 */
+}
+.swiper-slide {
+    flex: 0 0 100%;        /* 每张占满屏宽 */
+    scroll-snap-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.swiper-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.close-btn {
+    position: fixed;
+    top: 15px; right: 15px;
+    z-index: 10000;
+    color: white;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    font-size: 24px;
+    cursor: pointer;
+}

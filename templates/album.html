@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <div class="header">
+        <a href="/">返回</a>
+        <span>{{folder_name}}</span>
+    </div>
     {% if group %}
         {% for sub_folder, images in group.items() %}
             <div class="group">
@@ -15,7 +19,8 @@
                     <div class="grid">
                         {% for image in images %}
                             <div class="grid-item">
-                                <img src="{{ image.thumb }}" loading="lazy" alt="">
+                                <img src="{{ image.thumb }}" loading="lazy"  onclick="openViewer({{image.index}})" alt="">
+
                             </div>
                         {% endfor %}
                     </div>
@@ -27,5 +32,51 @@
     {% else %}
     <div class="empty">暂无图片</div>
     {% endif %}
+
+    <div id="viewer" class="viewer">
+        <button class="close-btn" onclick="closeViewer()">✕</button>
+        <div class="swiper" id="swiper">
+            {% for url in all_orgin %}
+            <div class="swiper-slide">
+                <img data-src="{{ url }}">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+<script>
+const total = {{ all_orgin | length }};
+
+function loadImage(i){
+    if (i<0 || i>=total){
+        return 
+    }
+    var img = document.querySelectorAll('.swiper-slide img')[i];
+    if(img.src){
+        return 
+    }
+    img.src = img.dataset.src;
+
+}
+
+function openViewer(index) {
+    loadImage(index)
+    loadImage(index+1)
+    loadImage(index-1)
+
+    document.getElementById('viewer').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    var swiper = document.getElementById('swiper');
+    swiper.scrollLeft = swiper.clientWidth * index;
+}
+
+function closeViewer() {
+    document.getElementById('viewer').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+</script>
+
 </body>
 </html>
+
+

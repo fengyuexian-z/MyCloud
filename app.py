@@ -116,11 +116,14 @@ def show_album(folder):
         group = scan_recursive(folder_path, base_folder, folder_name)
 
     all_orgin=[]
+    idx=0
     for sub_folder, images in group.items():
         for img in images:
+            img["index"]=idx
             all_orgin.append(img["original"])
+            idx+=1
 
-    return render_template("album.html",all_orgin=all_orgin,group=group)
+    return render_template("album.html",all_orgin=all_orgin,group=group,folder_name=folder)
      
 @app.route('/file/<path:filename>')
 def send_files(filename):
