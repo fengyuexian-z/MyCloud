@@ -6,7 +6,7 @@ app=Flask(__name__)
 
 Project_Path = os.path.dirname(os.path.abspath(__file__))
 Thumb_Dir = os.path.join(Project_Path,"thumbnails")
-Source_Dir=os.path.expanduser("C:/Users/Lenovo_PC/Downloads")
+Source_Dir=os.path.expanduser("C:/Users/Lenovo_PC/Pictures")
 if not os.path.exists(Source_Dir):
     Source_Dir = "."
 
@@ -15,7 +15,7 @@ Supported_Image=['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
 def scan_recursive(folder_path, base_folder, folder_name, recursive=True):
     """
     递归扫描 folder_path，返回一个字典：
-    {子文件夹相对路径: [{图片文件名url路径:  原图、缩略图}]}
+    {子文件夹相对路径: [{缩略图url: , 原图url: }]}
     """
     result = {}
     for item in os.listdir(folder_path):

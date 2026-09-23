@@ -3,7 +3,7 @@ from PIL import Image
 
 #配置路径
 Project_Path = os.path.dirname(os.path.abspath(__file__))
-Source_Dir=os.path.expanduser("C:/Users/Lenovo_PC/Downloads")
+Source_Dir=os.path.expanduser("C:/Users/Lenovo_PC/Pictures")
 Thumb_Dir = os.path.join(Project_Path,"thumbnails")
 
 #缩略图大小及支持的格式
