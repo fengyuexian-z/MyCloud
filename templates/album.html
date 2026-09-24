@@ -51,7 +51,7 @@ function loadImage(i){
     if (i<0 || i>=total){
         return 
     }
-    var img = document.querySelectorAll('.swiper-slide img')[i];
+    let img = document.querySelectorAll('.swiper-slide img')[i];
     if(img.src){
         return 
     }
@@ -66,13 +66,27 @@ function openViewer(index) {
 
     document.getElementById('viewer').classList.add('active');
     document.body.style.overflow = 'hidden';
-    var swiper = document.getElementById('swiper');
+    let swiper = document.getElementById('swiper');
     swiper.scrollLeft = swiper.clientWidth * index;
 }
 
+const  swiper = document.getElementById('swiper'); 
+let scrolltime = null 
+swiper.addEventListener('scroll',function(){
+    clearTimeout(scrolltime);
+    scrolltime = setTimeout(() => {
+        let index = Math.round(this.scrollLeft / this.clientWidth );
+        loadImage(index);
+        loadImage(index+1);
+        loadImage(index-1);
+    }, 100);
+
+})
+
+
 function closeViewer() {
     document.getElementById('viewer').classList.remove('active');
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = 'auto'; 
 }
 </script>
 
