@@ -14,7 +14,7 @@
     {% if group %}
         {% for sub_folder, images in group.items() %}
             <div class="group">
-                <h3>{{ sub_folder }}</h3>
+                <h2>{{ sub_folder }}</h2>
                 {% if images %}
                     <div class="grid">
                         {% for image in images %}
@@ -46,48 +46,103 @@
 
 <script>
 const total = {{ all_orgin | length }};
+const viewer = document.getElementById('viewer');
+const swiper = document.getElementById('swiper');
+let currentIndex=0;
 
 function loadImage(i){
     if (i<0 || i>=total){
-        return 
+        return ;
     }
     let img = document.querySelectorAll('.swiper-slide img')[i];
     if(img.src){
-        return 
+        return ;
     }
     img.src = img.dataset.src;
 
 }
 
-function openViewer(index) {
-    loadImage(index)
-    loadImage(index+1)
-    loadImage(index-1)
-
-    document.getElementById('viewer').classList.add('active');
-    document.body.style.overflow = 'hidden';
-    let swiper = document.getElementById('swiper');
-    swiper.scrollLeft = swiper.clientWidth * index;
+function preload(index){
+    loadImage(index);
+    loadImage(index+1);
+    loadImage(index-1);
 }
 
-const  swiper = document.getElementById('swiper'); 
+function Goto(index,smooth = true){
+    if(index<0||index>=total){
+        return ;
+    }
+    currentIndex=index;
+    preload(index);
+    swiper.scrollTo({
+        left: swiper.clientWidth*index,
+        behavior: smooth? 'smooth' : 'auto'
+    });
+}
+
+function openViewer(index) {
+    currentIndex = index;
+
+    viewer.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    Goto(index,false);
+}
+
+//滑动切换图片,加上防抖功能
 let scrolltime = null 
 swiper.addEventListener('scroll',function(){
     clearTimeout(scrolltime);
     scrolltime = setTimeout(() => {
         let index = Math.round(this.scrollLeft / this.clientWidth );
-        loadImage(index);
-        loadImage(index+1);
-        loadImage(index-1);
-    }, 100);
+        if (index == currentIndex) {
+            return;
+        }
+        currentIndex = index;
+        preload(index);
+    }, 200);
 
 })
 
-
 function closeViewer() {
-    document.getElementById('viewer').classList.remove('active');
+    viewer.classList.remove('active');
     document.body.style.overflow = 'auto'; 
 }
+//键盘esc，方向键监听
+document.addEventListener('keydown',function(e){
+    if (!viewer.classList.contains('active')) return;
+    switch(e.key){
+        case 'Escape': 
+            closeViewer();
+            break;
+        case 'ArrowLeft':
+            e.preventDefault();
+            Goto(currentIndex-1,true);
+            break;
+        case 'ArrowRight':
+            e.preventDefault();
+            Goto(currentIndex+1,true);
+            break;
+    }  
+})
+//点击背景切换图片或关闭大图
+viewer.addEventListener('click',function(e){
+    if (e.target.tagName === 'BUTTON') {
+        return;
+    }
+    let x = e.clientX;
+    let w = window.innerWidth;;
+
+    if( x < w/3){
+        Goto(currentIndex-1,true);
+    }
+    else if(x > w*2/3){
+        Goto(currentIndex+1,true);
+    }
+    else{
+        closeViewer();
+    }
+})
+
 </script>
 
 </body>
