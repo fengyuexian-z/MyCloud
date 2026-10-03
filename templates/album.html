@@ -55,6 +55,9 @@ function loadImage(i){
         return ;
     }
     let img = document.querySelectorAll('.swiper-slide img')[i];
+    if (!img) {         
+        return;
+    }
     if(img.src){
         return ;
     }
@@ -68,6 +71,14 @@ function preload(index){
     loadImage(index-1);
 }
 
+function resetZoom(){
+    if(zoomedImg){
+        zoomedImg.style.transform = 'scale(1)';
+        isZoomed = false;
+        zoomedImg = null;
+    }
+}
+
 function Goto(index,smooth = true){
     if(index<0||index>=total){
         return ;
@@ -78,6 +89,7 @@ function Goto(index,smooth = true){
         left: swiper.clientWidth*index,
         behavior: smooth? 'smooth' : 'auto'
     });
+    resetZoom();
 }
 
 function openViewer(index) {
@@ -89,23 +101,26 @@ function openViewer(index) {
 }
 
 //滑动切换图片,加上防抖功能
-let scrolltime = null 
+let scrollTimer = null 
 swiper.addEventListener('scroll',function(){
-    clearTimeout(scrolltime);
-    scrolltime = setTimeout(() => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+        if (this.clientWidth === 0) return;
         let index = Math.round(this.scrollLeft / this.clientWidth );
         if (index == currentIndex) {
             return;
         }
         currentIndex = index;
         preload(index);
+        resetZoom();
     }, 200);
-
+    
 })
 
 function closeViewer() {
     viewer.classList.remove('active');
-    document.body.style.overflow = 'auto'; 
+    document.body.style.overflow = 'auto';
+    resetZoom();
 }
 //键盘esc，方向键监听
 document.addEventListener('keydown',function(e){
@@ -124,22 +139,45 @@ document.addEventListener('keydown',function(e){
             break;
     }  
 })
-//点击背景切换图片或关闭大图
+//单击切图/关闭 + 双击放大
+let clickTimer = null;
 viewer.addEventListener('click',function(e){
     if (e.target.tagName === 'BUTTON') {
         return;
     }
-    let x = e.clientX;
-    let w = window.innerWidth;;
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+        let x = e.clientX;
+        let w = window.innerWidth;;
 
-    if( x < w/3){
-        Goto(currentIndex-1,true);
+        if( x < w/3){
+            Goto(currentIndex-1,true);
+        }
+        else if(x > w*2/3){
+            Goto(currentIndex+1,true);
+        }
+        else{
+            closeViewer();
+        }
+    },250)    
+})
+
+let isZoomed = false;
+let zoomedImg = null;
+viewer.addEventListener('dblclick',function(e){
+    clearTimeout(clickTimer);
+    if(e.target.tagName !== 'IMG'){
+        return;
     }
-    else if(x > w*2/3){
-        Goto(currentIndex+1,true);
+    isZoomed = !isZoomed;
+    let img = e.target;
+    if(isZoomed){
+        img.style.transform = 'scale(2)';
+        zoomedImg = img;
     }
     else{
-        closeViewer();
+        img.style.transform = 'scale(1)';
+        zoomedImg = null
     }
 })
 
