@@ -19,7 +19,7 @@
                     <div class="grid">
                         {% for image in images %}
                             <div class="grid-item">
-                                <img src="{{ image.thumb }}" loading="lazy"  onclick="openViewer({{image.index}})" alt="">
+                                <img src="{{ image.thumb }}" loading="lazy" fetchpriority="low" onclick="openViewer({{image.index}})" alt="">
 
                             </div>
                         {% endfor %}
@@ -61,8 +61,8 @@ function loadImage(i){
     if(img.src){
         return ;
     }
+    img.fetchPriority = 'high';
     img.src = img.dataset.src;
-
 }
 
 function preload(index){
@@ -76,6 +76,11 @@ function resetZoom(){
         zoomedImg.style.transform = 'scale(1)';
         isZoomed = false;
         zoomedImg = null;
+        swiper.classList.remove('zoomed');
+        translateX = 0;
+        translateY = 0;
+        currentX = 0;
+        currentY = 0;
     }
 }
 
@@ -173,13 +178,62 @@ viewer.addEventListener('dblclick',function(e){
     let img = e.target;
     if(isZoomed){
         img.style.transform = 'scale(2)';
+        swiper.classList.add('zoomed');
         zoomedImg = img;
     }
     else{
         img.style.transform = 'scale(1)';
+        swiper.classList.remove('zoomed');
         zoomedImg = null
     }
 })
+
+let isDragging = false;
+let startX = 0, startY = 0;          // 手指按下时的坐标
+let translateX = 0, translateY = 0;  // 图片当前的平移量
+let maxX = 0;
+let maxY = 0;
+swiper.addEventListener('touchstart',function(e){
+    if(!isZoomed){
+        return ;
+    }
+    if(e.touches.length !== 1){
+        return ;
+    }
+    isDragging = true;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    maxX = Math.max(0, (2*zoomedImg.clientWidth - swiper.clientWidth)/2);
+    maxY = Math.max(0, (2*zoomedImg.clientHeight - swiper.clientHeight)/2);
+    zoomedImg.classList.add('dragging');
+})
+let currentX = 0;
+let currentY = 0;
+swiper.addEventListener('touchmove',function(e){
+    if(!isDragging){
+        return;
+    }
+    e.preventDefault();
+    let dx = e.touches[0].clientX - startX;
+    let dy = e.touches[0].clientY - startY;
+    let newX = translateX + dx;
+    let newY = translateY + dy;
+    newX = Math.max(-maxX, Math.min(maxX, newX));
+    newY = Math.max(-maxY, Math.min(maxY, newY));
+    currentX = newX;
+    currentY = newY;
+    zoomedImg.style.transform = `translate3d(${newX}px, ${newY}px, 0) scale(2)`;
+}, { passive: false })
+swiper.addEventListener('touchend',function(e){
+    if(!isDragging){
+        return;
+    }
+    translateX = currentX;
+    translateY = currentY;
+    isDragging = false;
+    zoomedImg.classList.remove('dragging');
+})
+
 
 </script>
 
