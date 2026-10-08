@@ -81,6 +81,8 @@ function resetZoom(){
         translateY = 0;
         currentX = 0;
         currentY = 0;
+        isDragging = false;
+        didDrag = false;
     }
 }
 
@@ -144,29 +146,42 @@ document.addEventListener('keydown',function(e){
             break;
     }  
 })
-//单击切图/关闭 + 双击放大
+//单击切图/关闭
 let clickTimer = null;
+//mouseup时，会触发一次click，使用didDrag记录状态，拖拽超过一定距离标记为拖拽
+let didDrag = false;
 viewer.addEventListener('click',function(e){
+    if(didDrag){
+        didDrag = false;
+        return;
+    }
     if (e.target.tagName === 'BUTTON') {
         return;
     }
     clearTimeout(clickTimer);
     clickTimer = setTimeout(() => {
         let x = e.clientX;
-        let w = window.innerWidth;;
-
-        if( x < w/3){
-            Goto(currentIndex-1,true);
-        }
-        else if(x > w*2/3){
-            Goto(currentIndex+1,true);
+        let w = window.innerWidth;
+        if(isZoomed){
+            if(w/3 <= x && x <= w*2/3){
+                closeViewer();
+            }
+            return;
         }
         else{
-            closeViewer();
+            if( x < w/3){
+                Goto(currentIndex-1,true);
+            }
+            else if(x > w*2/3){
+                Goto(currentIndex+1,true);
+            }
+            else{
+                closeViewer();
+            }
         }
     },250)    
 })
-
+//双击放大
 let isZoomed = false;
 let zoomedImg = null;
 viewer.addEventListener('dblclick',function(e){
@@ -187,51 +202,71 @@ viewer.addEventListener('dblclick',function(e){
         zoomedImg = null
     }
 })
-
+//拖动函数
 let isDragging = false;
 let startX = 0, startY = 0;          // 手指按下时的坐标
 let translateX = 0, translateY = 0;  // 图片当前的平移量
 let maxX = 0;
 let maxY = 0;
-swiper.addEventListener('touchstart',function(e){
-    if(!isZoomed){
-        return ;
+function startDragging(x, y){
+    if(!isZoomed) return;
+    
+    startX = x;
+    startY = y;
+    maxX = Math.max(0, (2*zoomedImg.clientWidth - swiper.clientWidth)/2);
+    maxY = Math.max(0, (2*zoomedImg.clientHeight - swiper.clientHeight)/2);
+    isDragging=true;
+    zoomedImg.classList.add('dragging')
+}
+let newX = 0;
+let newY = 0;
+function moveDragging(x,y){
+    if(!isZoomed) return;
+    let dx = x - startX;
+    let dy = y - startY;
+    if(Math.abs(dx)>5 || Math.abs(dy)>5){
+        didDrag = true;
     }
+    newX = translateX + dx;
+    newY = translateY + dy;
+    newX = Math.max(-maxX, Math.min(newX, maxX));//这里判断x坐标是否合法，须在-maxX与maxX之间；
+    newY = Math.max(-maxY, Math.min(newY, maxY));
+    zoomedImg.style.transform =  `translate3d(${newX}px, ${newY}px, 0) scale(2)`;
+}
+function endDragging(){
+    if(!isDragging) return;
+    translateX = newX;
+    translateY = newY;
+    isDragging = false;
+    zoomedImg.classList.remove('dragging');
+}
+//触摸滑动
+swiper.addEventListener('touchstart',function(e){
     if(e.touches.length !== 1){
         return ;
     }
-    isDragging = true;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    maxX = Math.max(0, (2*zoomedImg.clientWidth - swiper.clientWidth)/2);
-    maxY = Math.max(0, (2*zoomedImg.clientHeight - swiper.clientHeight)/2);
-    zoomedImg.classList.add('dragging');
+    didDrag = false;
+    startDragging(e.touches[0].clientX,e.touches[0].clientY);
 })
-let currentX = 0;
-let currentY = 0;
 swiper.addEventListener('touchmove',function(e){
-    if(!isDragging){
-        return;
-    }
+    if(!isDragging) return;
     e.preventDefault();
-    let dx = e.touches[0].clientX - startX;
-    let dy = e.touches[0].clientY - startY;
-    let newX = translateX + dx;
-    let newY = translateY + dy;
-    newX = Math.max(-maxX, Math.min(maxX, newX));
-    newY = Math.max(-maxY, Math.min(maxY, newY));
-    currentX = newX;
-    currentY = newY;
-    zoomedImg.style.transform = `translate3d(${newX}px, ${newY}px, 0) scale(2)`;
+    moveDragging(e.touches[0].clientX,e.touches[0].clientY);
 }, { passive: false })
 swiper.addEventListener('touchend',function(e){
-    if(!isDragging){
-        return;
-    }
-    translateX = currentX;
-    translateY = currentY;
-    isDragging = false;
-    zoomedImg.classList.remove('dragging');
+    endDragging();
+})
+//鼠标拖拽
+swiper.addEventListener('mousedown',function(e){
+    didDrag = false;
+    startDragging(e.clientX,e.clientY);
+})
+document.addEventListener('mousemove',function(e){
+    if(!isDragging) return;
+    moveDragging(e.clientX,e.clientY);
+})
+document.addEventListener('mouseup',function(e){
+    endDragging();
 })
 
 

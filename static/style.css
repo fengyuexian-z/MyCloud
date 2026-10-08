@@ -165,4 +165,5 @@ h1 {
 .swiper.zoomed{
     overflow: hidden;
     touch-action: none;
+    user-select: none;
 }
