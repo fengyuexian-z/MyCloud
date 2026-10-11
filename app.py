@@ -12,56 +12,53 @@ if not os.path.exists(Source_Dir):
 
 Supported_Image=['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
 
-def scan_recursive(folder_path, base_folder, folder_name, recursive=True):
+def scan_recursive(folder_path, base_folder_path, base_folder_name, recursive=True):
     """
+    参数（当前文件夹地址，根文件夹地址，根文件夹名字，是否递归）
+
+    大致思路：扫描folder_path，如果是支持的文件，加入images，如果是文件夹，递归调用返回sub_result，加入children（子树）
+    拼url：先拿folder_path与base_folder_path求相对地址rel_path，转成url，然后f"/file(original)/base_folder_name/rel_url"
+
     递归扫描 folder_path，返回一个字典：
-    {子文件夹相对路径: [{缩略图url: , 原图url: }]}
+    {images:[{thumb_url: , ori_url: }], children:{} }
     """
-    result = {}
+
+    result = {"images":[],"children":{}}
     for item in os.listdir(folder_path):
-        full_path=os.path.join(folder_path,item)
+        full_path = os.path.join(folder_path,item)
         if os.path.isdir(full_path):
-            if recursive:
-                sub_result=scan_recursive(full_path,base_folder,folder_name, recursive)
-                for sub_folder, images in sub_result.items():
-                    if sub_folder in result:
-                        result[sub_folder].extend(images)
-                    else:
-                        result[sub_folder]=images
-  
+            if(recursive):
+                sub_result = scan_recursive(full_path,base_folder_path,base_folder_name,recursive)
+                result["children"][item] = sub_result   #注意是字典
         else:
-            ext=os.path.splitext(item)[1].lower().lstrip('.')
+            ext = os.path.splitext(item)[1].lower().lstrip('.')
             if ext in Supported_Image:
-                rel_path=os.path.relpath(full_path, base_folder)
-                sub_path=os.path.dirname(rel_path)
-                if sub_path=="":
-                    sub_path="未分类"
-
-                rel_url=rel_path.replace("\\","/")
-                thumb_url    = f"/file/{folder_name}/{rel_url}"
-                original_url = f"/original/{folder_name}/{rel_url}"
-
-                if sub_path not in result:
-                    result[sub_path] = []
-                result[sub_path].append({
-                    "thumb":    thumb_url,
-                    "original": original_url,
+                rel_path = os.path.relpath(full_path,base_folder_path)
+                rel_url = rel_path.replace("\\","/")
+                thumb_url = f"/file/{base_folder_name}/{rel_url}"
+                original_url = f"/original/{base_folder_name}/{rel_url}"
+                result["images"].append({
+                    "thumb_url" : thumb_url,
+                    "original_url" : original_url,
+                    "name" : item
                 })
-                
     return result
-    
 
 @app.route('/')
 def home():
+    """
+    这里负责给index.html提供数据，扫描根目录的下的第一层文件夹与图片，图片统一放入未分类相册，相册封面图默认为第一张（没有则显示为📁）
+    存入albums再交给前端渲染
+    """
     try:
-        items=os.listdir(Source_Dir)
+        source_entries=os.listdir(Source_Dir)
     except:
         return f"<h1>路径不存在：{Source_Dir}</h1>"
 
     albums=[]
     folders=[]
     root_images=[]
-    for item in items:
+    for item in source_entries:
         item_path=os.path.join(Source_Dir,item)
         if os.path.isdir(item_path):
             folders.append(item)
@@ -120,7 +117,7 @@ def show_album(folder):
     for sub_folder, images in group.items():
         for img in images:
             img["index"]=idx
-            all_orgin.append(img["original"])
+            all_orgin.append(img["original_url"])
             idx+=1
 
     return render_template("album.html",all_orgin=all_orgin,group=group,folder_name=folder)

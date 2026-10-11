@@ -19,7 +19,7 @@
                     <div class="grid">
                         {% for image in images %}
                             <div class="grid-item">
-                                <img src="{{ image.thumb }}" loading="lazy" fetchpriority="low" onclick="openViewer({{image.index}})" alt="">
+                                <img src="{{ image.thumb_url }}" loading="lazy" fetchpriority="low" onclick="openViewer({{image.index}})" alt="">
 
                             </div>
                         {% endfor %}
