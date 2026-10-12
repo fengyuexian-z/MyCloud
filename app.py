@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory, render_template
-import os
+import os, json
 from urllib.parse import quote
 
 app=Flask(__name__)
@@ -20,7 +20,10 @@ def scan_recursive(folder_path, base_folder_path, base_folder_name, recursive=Tr
     拼url：先拿folder_path与base_folder_path求相对地址rel_path，转成url，然后f"/file(original)/base_folder_name/rel_url"
 
     递归扫描 folder_path，返回一个字典：
-    {images:[{thumb_url: , ori_url: }], children:{} }
+    {images:[{thumb_url: , ori_url: }], children:{
+        "name": {
+            "images": [],
+            "children": {...} }
     """
 
     result = {"images":[],"children":{}}
@@ -44,10 +47,38 @@ def scan_recursive(folder_path, base_folder_path, base_folder_name, recursive=Tr
                 })
     return result
 
+def flatten_tree(node, name, level, result, idx_list, all_origin):
+    """
+    node       : 当前子树，形如 {"images": [...], "children": {...}}
+    name       : 当前文件夹显示名，比如 "2024" / "巴黎"
+    level      : 层级，根 = 0
+    result     : 最终扁平列表，直接 append
+    idx_list   : [0]，理解为 C++ 的 int&
+    all_orgin  : 顺序收集原图 URL
+    大致思路：先处理当前节点自身的images，分配全局index，然后加入group里，此时group已经完整，加入result，读image里的original_url加入all_origin
+    然后在children递归调用，传子节点的children_node，children_name，level+1
+    """
+    group = {
+        "name" : name,
+        "level" : level,
+        "images" : []
+    }
+    for img in node["images"]:
+        img["index"] = idx_list[0]
+        idx_list[0] +=1
+        group["images"].append(img)
+        all_origin.append(img["original_url"])
+    result.append(group)
+
+    for children_name, children_node in node["children"].items():
+        flatten_tree(children_node, children_name, level+1, result, idx_list, all_origin)
+
+    return result
+
 @app.route('/')
 def home():
     """
-    这里负责给index.html提供数据，扫描根目录的下的第一层文件夹与图片，图片统一放入未分类相册，相册封面图默认为第一张（没有则显示为📁）
+    这里负责给index.html提供数据，扫描根目录的下的第一层文件夹与图片，图片统一放入未分类相册，相册封面图默认为第一张(没有就为空)
     存入albums再交给前端渲染
     """
     try:
@@ -95,6 +126,7 @@ def home():
 
 @app.route('/album/<folder>')
 def show_album(folder):
+    """
     if folder == "未分类":
         folder_path=Source_Dir
         base_path=Source_Dir
@@ -121,6 +153,19 @@ def show_album(folder):
             idx+=1
 
     return render_template("album.html",all_orgin=all_orgin,group=group,folder_name=folder)
+    """
+    folder_path=Source_Dir
+    base_folder_path=Source_Dir
+    base_folder_name=folder
+    tree = scan_recursive(folder_path, base_folder_path, base_folder_name)
+
+    idx_list = [0]
+    all_origin = []
+    flat = flatten_tree(tree, folder, 0, [], idx_list, all_origin)
+
+    print("===== flat =====")
+    print(json.dumps(flat, ensure_ascii=False, indent=2))
+    print("===== all_origin 长度 =====", len(all_origin))
      
 @app.route('/file/<path:filename>')
 def send_files(filename):
