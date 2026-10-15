@@ -52,7 +52,7 @@ def flatten_tree(node, name, level, result, idx_list, all_origin):
     node       : 当前子树，形如 {"images": [...], "children": {...}}
     name       : 当前文件夹显示名，比如 "2024" / "巴黎"
     level      : 层级，根 = 0
-    result     : 最终扁平列表，直接 append
+    result     : 最终扁平列表，元素为group{name, level, imades[]}，直接 append
     idx_list   : [0]，理解为 C++ 的 int&
     all_orgin  : 顺序收集原图 URL
     大致思路：先处理当前节点自身的images，分配全局index，然后加入group里，此时group已经完整，加入result，读image里的original_url加入all_origin
@@ -68,6 +68,7 @@ def flatten_tree(node, name, level, result, idx_list, all_origin):
         idx_list[0] +=1
         group["images"].append(img)
         all_origin.append(img["original_url"])
+
     result.append(group)
 
     for children_name, children_node in node["children"].items():
@@ -127,45 +128,18 @@ def home():
 @app.route('/album/<folder>')
 def show_album(folder):
     """
-    if folder == "未分类":
-        folder_path=Source_Dir
-        base_path=Source_Dir
-        folder_name=""
-        if not os.path.exists(folder_path):
-                return "<h1>相册不存在</h1><a href='/'>返回</a>"
-        
-        group = scan_recursive(folder_path, base_path, folder_name, False)
-    else:
-        folder_path = os.path.join(Source_Dir, folder)
-        base_folder = folder_path
-        folder_name = folder
-        if not os.path.exists(folder_path):
-                return "<h1>相册不存在</h1><a href='/'>返回</a>"
-        
-        group = scan_recursive(folder_path, base_folder, folder_name)
-
-    all_orgin=[]
-    idx=0
-    for sub_folder, images in group.items():
-        for img in images:
-            img["index"]=idx
-            all_orgin.append(img["original_url"])
-            idx+=1
-
-    return render_template("album.html",all_orgin=all_orgin,group=group,folder_name=folder)
+    浏览器传入folder，将其作为根文件夹，scan_recursive遍历返回树，使用flatten_tree将路径扁平化后，将flat,folder,all_original返回给前端
     """
-    folder_path=Source_Dir
-    base_folder_path=Source_Dir
+    folder_path=os.path.join(Source_Dir,folder)
+    base_folder_path=os.path.join(Source_Dir,folder)
     base_folder_name=folder
     tree = scan_recursive(folder_path, base_folder_path, base_folder_name)
 
     idx_list = [0]
-    all_origin = []
-    flat = flatten_tree(tree, folder, 0, [], idx_list, all_origin)
-
-    print("===== flat =====")
-    print(json.dumps(flat, ensure_ascii=False, indent=2))
-    print("===== all_origin 长度 =====", len(all_origin))
+    all_original = []
+    flat = flatten_tree(tree, folder, 0, [], idx_list, all_original)
+    print(flat)
+    return render_template("album.html", flat=flat, all_original=all_original, folder_name=folder)    
      
 @app.route('/file/<path:filename>')
 def send_files(filename):

@@ -11,13 +11,13 @@
         <a href="/">返回</a>
         <span>{{folder_name}}</span>
     </div>
-    {% if group %}
-        {% for sub_folder, images in group.items() %}
-            <div class="group">
-                <h2>{{ sub_folder }}</h2>
-                {% if images %}
+    <!-- {% if flat %} -->
+        {% for group in flat %}
+            <div class="group" style="margin-left: {{group.level * 20}}px;" data-level="{{group.level}}">
+                <h2 onclick="toggleGroup(this)">{{ folder_name }}</h2>
+                {% if group.images %}
                     <div class="grid">
-                        {% for image in images %}
+                        {% for image in group.images %}
                             <div class="grid-item">
                                 <img src="{{ image.thumb_url }}" loading="lazy" fetchpriority="low" onclick="openViewer({{image.index}})" alt="">
 
@@ -36,7 +36,7 @@
     <div id="viewer" class="viewer">
         <button class="close-btn" onclick="closeViewer()">✕</button>
         <div class="swiper" id="swiper">
-            {% for url in all_orgin %}
+            {% for url in all_original %}
             <div class="swiper-slide">
                 <img data-src="{{ url }}">
             </div>
@@ -45,7 +45,31 @@
     </div>
 
 <script>
-const total = {{ all_orgin | length }};
+//目录折叠
+
+function toggleGroup(h2){
+    const group = h2.parentElement;
+    const level = Number(group.dataset.level);
+    const isCollapsed = group.classList.toggle('collapsed');
+    
+    let sib = group.nextElementSibling;
+    while(sib){
+        let sib_level = Number(sib.dataset.level);
+        if(level>=sib_level) break;
+
+        if(isCollapsed){
+            sib.classList.add('hidden-by-parent');
+        }
+        else{
+            sib.classList.remove('hidden-by-parent');
+        }
+        sib = sib.nextElementSibling;
+    }
+}
+
+//图片网格显示
+
+const total = {{ all_original | length }};
 const viewer = document.getElementById('viewer');
 const swiper = document.getElementById('swiper');
 let currentIndex=0;
@@ -162,13 +186,7 @@ viewer.addEventListener('click',function(e){
     clickTimer = setTimeout(() => {
         let x = e.clientX;
         let w = window.innerWidth;
-        if(isZoomed){
-            if(w/3 <= x && x <= w*2/3){
-                closeViewer();
-            }
-            return;
-        }
-        else{
+        if(!isZoomed){
             if( x < w/3){
                 Goto(currentIndex-1,true);
             }

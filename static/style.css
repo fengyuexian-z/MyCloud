@@ -167,3 +167,6 @@ h1 {
     touch-action: none;
     user-select: none;
 }
+/* 折叠状态 */
+.group.collapsed .grid { display: none; }        /* 自己折叠 */
+.group.hidden-by-parent { display: none; }       /* 被祖先藏 */
