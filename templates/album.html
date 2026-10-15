@@ -46,7 +46,10 @@
 
 <script>
 //目录折叠
-
+/*
+这里给group加入两个css类，collapsed记录自身被隐藏，hidden-by-parent记录被祖先隐藏
+用level判断下一个group是不是自己的儿子，如果下一个level小于等于自己，说明是自己的兄弟或祖先，可直接跳出循环
+*/
 function toggleGroup(h2){
     const group = h2.parentElement;
     const level = Number(group.dataset.level);
