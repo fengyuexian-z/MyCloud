@@ -84,11 +84,11 @@ def flatten_tree(node, name, level, result, idx_list, all_origin):
         idx_list[0] +=1
         group["images"].append(img)
         all_origin.append(img["original_url"])
-    for vde in node["videos"]:
-        vde["index"] = idx_list[0]
+    for vid in node["videos"]:
+        vid["index"] = idx_list[0]
         idx_list[0] +=1
-        group["videos"].append(vde)
-        all_origin.append(vde["original_url"])
+        group["videos"].append(vid)
+        all_origin.append(vid["original_url"])
 
     result.append(group)
 
